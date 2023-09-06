@@ -120,7 +120,9 @@ public class UploadMojo extends AbstractHelmMojo {
 		if (verification) {
 			for (Path chartDirectory : getChartDirectories()) {
 				Path chartPath = chartDirectory.resolve("Chart.yaml");
+				getLog().info("Verifying upload of " + chartPath);
 				if (!verifyUpload(chartPath)) {
+					getLog().info("Upload verification timed out.");
 					throw new MojoExecutionException("Chart verification failed");
 				}
 			}
@@ -220,9 +222,9 @@ public class UploadMojo extends AbstractHelmMojo {
 		while (System.currentTimeMillis() - startTime < timeoutMillis && !verificationSuccess) {
 			try {
 				helm()
-						.arguments("show", "chart", chartName,
-							"--version", chartVersion, "--repo", getHelmUploadUrl())
-						.execute("show chart failed");
+					.arguments("show", "chart", chartName,
+						"--version", chartVersion, "--repo", getHelmUploadUrl())
+					.execute("show chart failed");
 				verificationSuccess = true;
 			} catch (Exception e) {
 				getLog().info("Upload verification failed, retrying...");
