@@ -46,7 +46,7 @@ public class DependencyBuildMojoTest extends AbstractMojoTest {
 		assertTrue(message.startsWith("Null value for 'overwriteDependencyRepository' "), message);
 	}
 
-	@DisplayName("with overwriteLocalDependencies and ")
+	@DisplayName("with overwriteLocalDependencies and overwriteDependencyRepository")
 	@Test
 	void overwriteLocalDependencies(DependencyBuildMojo mojo) {
 		mojo.setChartDirectory(new File("src/test/resources/dependencies"));
