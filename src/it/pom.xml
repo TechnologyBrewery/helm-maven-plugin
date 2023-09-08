@@ -68,7 +68,7 @@
 					<version>${version.org.codehaus.mojo.tidy}</version>
 				</plugin>
 				<plugin>
-					<groupId>io.kokuwa.maven</groupId>
+					<groupId>org.technologybrewery</groupId>
 					<artifactId>helm-maven-plugin</artifactId>
 					<version>${version.io.kokuwa.maven.helm}</version>
 				</plugin>
