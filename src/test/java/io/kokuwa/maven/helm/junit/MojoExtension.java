@@ -97,6 +97,8 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 						field.set(mojo, new File(parameter.getDefaultValue()));
 					} else if (parameter.getType().equals(String.class.getName())) {
 						field.set(mojo, parameter.getDefaultValue());
+					} else if (parameter.getType().equals(Integer.class.getName())) {
+						field.set(mojo, Integer.parseInt(parameter.getDefaultValue()));
 					} else {
 						fail("unsupported type: " + parameter.getType());
 					}
@@ -106,12 +108,20 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			// preconfigure
 
 			mojo.setChartDirectory(new File("src/test/resources/simple")); // set some sane defaults for tests
-			mojo.setHelmExecutableDirectory(new File("src/it")); // avoid download helm
+			mojo.setHelmExecutableDirectory(determineHelmExecutableDirectory());
 			mojo.setHelmVersion("3.12.0"); // avoid github api
 
 			return mojo;
 		} catch (ReflectiveOperationException e) {
 			throw new ParameterResolutionException("Failed to setup mockito.", e);
+		}
+	}
+
+	public static File determineHelmExecutableDirectory() {
+		if (System.getProperty("os.arch").equals("aarch64")) {
+			return new File("src/it/helm-executables/aarch64-helm/");
+		} else {
+			return new File("src/it/helm-executables/x86_64-helm/");
 		}
 	}
 }
