@@ -21,6 +21,7 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.condition.OS;
 
+import io.kokuwa.maven.helm.junit.MojoExtension;
 import io.kokuwa.maven.helm.pojo.K8SCluster;
 import io.kokuwa.maven.helm.pojo.ValueOverride;
 
@@ -37,8 +38,9 @@ public class HelmMojoTest extends AbstractMojoTest {
 		void fixed(LintMojo mojo) {
 			mojo.setUseLocalHelmBinary(true);
 			mojo.setAutoDetectLocalHelmBinary(false);
-			mojo.setHelmExecutableDirectory(new File("src/it"));
-			Path expected = Paths.get("src/it").resolve(HELM).toAbsolutePath();
+			mojo.setHelmExecutableDirectory(MojoExtension.determineHelmExecutableDirectory());
+			Path expected = Paths.get(MojoExtension.determineHelmExecutableDirectory().toString())
+					.resolve(HELM).toAbsolutePath();
 			Path actual = assertDoesNotThrow(() -> mojo.getHelmExecutablePath());
 			assertEquals(expected, actual);
 		}
