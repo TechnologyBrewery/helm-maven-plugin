@@ -32,7 +32,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 public class HelmExecutable {
 
-	private final Log log;
+	public final Log log;
 	@Getter
 	private final Path executable;
 	private final List<String> arguments = new ArrayList<>();
