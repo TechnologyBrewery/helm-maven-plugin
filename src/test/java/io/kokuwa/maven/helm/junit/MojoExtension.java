@@ -117,6 +117,10 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 		}
 	}
 
+	/**
+	 * Determines which helm executable to use based on the machine's architecture.
+	 * @return location of appropriate helm executable
+	 */
 	public static File determineHelmExecutableDirectory() {
 		if (System.getProperty("os.arch").equals("aarch64")) {
 			return new File("src/it/helm-executables/aarch64-helm/");

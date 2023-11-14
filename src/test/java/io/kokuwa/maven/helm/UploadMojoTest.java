@@ -291,7 +291,8 @@ public class UploadMojoTest extends AbstractMojoTest {
 	@DisplayName("flag: with flag verify")
 	@Test
 	void verify(UploadMojo mojo) throws IOException {
-		mojo.setVerification(true);
+		mojo.setUploadVerification(true);
+		mojo.setChartVersion("0.1.0");
 		mojo.setUploadRepoStable(new HelmRepository()
 				.setType(RepoType.NEXUS)
 				.setName("my-nexus")
@@ -303,8 +304,9 @@ public class UploadMojoTest extends AbstractMojoTest {
 	@DisplayName("flag: with flags verify and timeout")
 	@Test
 	void verifyAndTimeout(UploadMojo mojo) {
-		mojo.setVerification(true);
-		mojo.setTimeout(10);
+		mojo.setUploadVerification(true);
+		mojo.setUploadVerificationTimeout(10);
+		mojo.setChartVersion("0.1.0");
 		mojo.setUploadRepoStable(new HelmRepository()
 				.setType(RepoType.NEXUS)
 				.setName("my-nexus")
@@ -316,8 +318,9 @@ public class UploadMojoTest extends AbstractMojoTest {
 	@DisplayName("flag: with flags verify and timeout times out")
 	@Test
 	void verifyAndTimeoutFail(UploadMojo mojo) {
-		mojo.setVerification(true);
-		mojo.setTimeout(10);
+		mojo.setUploadVerification(true);
+		mojo.setUploadVerificationTimeout(10);
+		mojo.setChartVersion("0.1.0");
 		mojo.setUploadRepoStable(new HelmRepository()
 				.setType(RepoType.NEXUS)
 				.setName("my-nexus")
@@ -330,8 +333,9 @@ public class UploadMojoTest extends AbstractMojoTest {
 	@DisplayName("input: timeout not postive")
 	@Test
 	void timeoutTimeNotPositive(UploadMojo mojo) throws Exception {
-		mojo.setVerification(true);
-		mojo.setTimeout(-1);
+		mojo.setUploadVerification(true);
+		mojo.setUploadVerificationTimeout(-1);
+		mojo.setChartVersion("0.1.0");
 		copyPackagedHelmChartToOutputdirectory(mojo);
 		assertThrows(IllegalArgumentException.class, mojo::execute, "Nonpositive timeout must fail.");
 	}
@@ -367,38 +371,18 @@ public class UploadMojoTest extends AbstractMojoTest {
 	}
 
 	private void assertUploadVerifySuccess(UploadMojo mojo, RequestMethod method, String path) {
-		RequestPatternBuilder requestPattern;
-		requestPattern = RequestPatternBuilder.allRequests();
-
-		mock.stubFor(WireMock.put(WireMock.urlMatching(".*"))
-				.willReturn(WireMock.ok()
-						.withStatus(200)));
-		mock.stubFor(WireMock.get(WireMock.urlMatching(".*/index\\.yaml$"))
-				.willReturn(WireMock.ok()
-						.withStatus(200)
-						.withHeader("Content-Type", "application/yaml")
-						.withBody(getIndexYamlBody())));
-		mock.stubFor(WireMock.get(WireMock.urlMatching(".*\\.tgz$"))
-				.willReturn(WireMock.ok()
-						.withStatus(200)
-						.withHeader("Content-Type", "application/gzip")
-						.withBodyFile("app-0.1.0.tgz")));
-
+		mockHelmShowChart();
 		assertDoesNotThrow(() -> mojo.execute(), "upload failed");
-		List<LoggedRequest> requests = mock.findAll(requestPattern);
-		assertEquals(3, requests.size(), "expected only three requests");
-		LoggedRequest request = requests.get(0);
-		assertEquals(method, request.getMethod(), "method");
-		assertEquals((mojo.getUploadRepoStable().getUrl().startsWith("https")
-				? "https://127.0.0.1:" + mock.getHttpsPort()
-				: "http://127.0.0.1:" + mock.getPort()) + path, request.getAbsoluteUrl(), "url");
-		assertEquals("application/gzip", request.getHeader(HttpHeaders.CONTENT_TYPE), "content-type");
+		verifyRequests(mojo, method, path);
 	}
 
 	private void assertUploadVerifyFail(UploadMojo mojo, RequestMethod method, String path) {
-		RequestPatternBuilder requestPattern;
-		requestPattern = RequestPatternBuilder.allRequests();
+		mockHelmShowChart();
+		assertThrows(MojoExecutionException.class, mojo::execute, "could not verify");
+		verifyRequests(mojo, method, path);
+	}
 
+	private void mockHelmShowChart() {
 		mock.stubFor(WireMock.put(WireMock.urlMatching(".*"))
 				.willReturn(WireMock.ok()
 						.withStatus(200)));
@@ -412,9 +396,10 @@ public class UploadMojoTest extends AbstractMojoTest {
 						.withStatus(200)
 						.withHeader("Content-Type", "application/gzip")
 						.withBodyFile("app-0.1.0.tgz")));
+	}
 
-		assertThrows(MojoExecutionException.class, mojo::execute, "could not verify");
-		List<LoggedRequest> requests = mock.findAll(requestPattern);
+	private void verifyRequests(UploadMojo mojo, RequestMethod method, String path) {
+		List<LoggedRequest> requests = mock.findAll(RequestPatternBuilder.allRequests());
 		LoggedRequest request = requests.get(0);
 		assertEquals(method, request.getMethod(), "method");
 		assertEquals((mojo.getUploadRepoStable().getUrl().startsWith("https")

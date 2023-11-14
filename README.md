@@ -246,6 +246,7 @@ and disables the auto-detection feature:
 
 - `helm:init` initializes Helm by downloading a specific version
 - `helm:dependency-build` resolves the chart dependencies
+- `helm:dependency-update` verifies that the required chart dependencies are present
 - `helm:package` packages the given charts (chart.tar.gz)
 - `helm:lint` tests the given charts
 - `helm:template` Locally render templates
@@ -259,7 +260,7 @@ and disables the auto-detection feature:
 ## Configuration
 
 Parameter | Type | User Property | Required | Description
---- | --- | --- | --- | ---
+--- |--------|--| --- | ---
 `<chartDirectory>` | string | helm.chartDirectory | true | root directory of your charts
 `<chartVersion>` | string | helm.chartVersion | true | Version of the charts. The version have to be in the [SEMVER-Format](https://semver.org/), required by helm.
 `<appVersion>` | string | helm.appVersion | false | The version of the app. This needn't be SemVer.
@@ -280,9 +281,9 @@ Parameter | Type | User Property | Required | Description
 `<repositoryCache>` | string | helm.repositoryCache | false | path to the file containing cached repository indexes
 `<repositoryConfig>` | string | helm.repositoryConfig | false | path to the file containing repository names and URLs
 `<repositoryAddForceUpdate>`| boolean | helm.repo.add.force-update | false | If `true`, replaces (overwrite) the repo if they already exists.
-`<helmExtraRepos>` | list of [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) | | false | adds extra repositories while init
-`<uploadRepoStable>`| [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) | | false | Upload repository for stable charts
-`<uploadRepoSnapshot>`| [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) | | false | Upload repository for snapshot charts (determined by version postfix 'SNAPSHOT')
+`<helmExtraRepos>` | list of [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) |  | false | adds extra repositories while init
+`<uploadRepoStable>`| [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) |  | false | Upload repository for stable charts
+`<uploadRepoSnapshot>`| [HelmRepository](./src/main/java/io/kokuwa/maven/helm/pojo/HelmRepository.java) |  | false | Upload repository for snapshot charts (determined by version postfix 'SNAPSHOT')
 `<lintStrict>` | boolean | helm.lint.strict | false | run lint command with strict option (fail on lint warnings)
 `<lintQuiet>` | boolean | helm.lint.quiet | false | run lint command with quiet option (print only warnings and errors)
 `<addDefaultRepo>` | boolean | helm.init.add-default-repo | true | If true, stable repo (<https://charts.helm.sh/stable>) will be added
@@ -297,14 +298,16 @@ Parameter | Type | User Property | Required | Description
 `<skipPackage>` | boolean | helm.package.skip | false | skip package goal
 `<skipUpload>` | boolean | helm.upload.skip | false | skip upload goal
 `<insecure>` | boolean | helm.upload.insecure | false | Skip tls certificate checks for the chart upload.
+`<uploadVerification>` | boolean | helm.upload.verification | false | wait for the chart to be added to the repository index before continuing
+`<uploadVerificationTimeout>` | Integer | helm.upload.timeout | false | set the timeout limit (in seconds) for verification to be attempted
 `<skipInstall>` | boolean | helm.install.skip | false | skip install goal
 `<skipUninstall>` | boolean | helm.uninstall.skip | false | skip uninstall goal
 `<security>` | string | helm.security | false | path to your [settings-security.xml](https://maven.apache.org/guides/mini/guide-encryption.html) (default: `~/.m2/settings-security.xml`)
 `<keyring>` | string | helm.package.keyring | false | path to gpg secret keyring for signing
-`<key>` | string  | helm.package.key | false | name of gpg key in keyring
+`<key>` | string | helm.package.key | false | name of gpg key in keyring
 `<passphrase>` | string | helm.package.passphrase | false | passphrase for gpg key (requires helm 3.4 or newer)
 `<skipPushLogin>` | boolean | helm.push.skipPushLogin | false | Skip login, usefull if already logged via `helm:registry-login`
-`<values>` | [ValueOverride](./src/main/java/io/kokuwa/maven/helm/pojo/ValueOverride.java) | | false | override some values for linting with helm.values.overrides (--set option), helm.values.stringOverrides (--set-string option), helm.values.fileOverrides (--set-file option) and last but not least helm.values.yamlFile (--values option)
+`<values>` | [ValueOverride](./src/main/java/io/kokuwa/maven/helm/pojo/ValueOverride.java) |  | false | override some values for linting with helm.values.overrides (--set option), helm.values.stringOverrides (--set-string option), helm.values.fileOverrides (--set-file option) and last but not least helm.values.yamlFile (--values option)
 `<namespace>` | string | helm.namespace | false | namespace scope for helm command
 `<kubeApiServer>` | string | helm.kubeApiServer | false | the address and the port for the Kubernetes API server
 `<kubeInsecure>` | string | helm.kubeInsecure | false | Skip tls certificate checks for the operation. Also known as `helm --kube-insecure-skip-tls-verify`.
@@ -314,10 +317,10 @@ Parameter | Type | User Property | Required | Description
 `<releaseName>` | string | helm.releaseName | false | Name of the release for upgrade goal
 `<installForce>` | boolean | helm.install.force | false | Force resource updates through a replacement strategy.
 `<installAtomic>` | boolean | helm.install.atomic | false | Set this to `true` to delete the installation on failure.
-`<installTimeout>` | boolean | helm.upgrade.imeout | false | Time in seconds to wait for any individual Kubernetes operation during install process. The default is 300 seconds (from helm) if `installAtomic` is set to `true`.
+`<installTimeout>` | boolean | helm.upgrade.timeout | false | Time in seconds to wait for any individual Kubernetes operation during install process. The default is 300 seconds (from helm) if `installAtomic` is set to `true`.
 `<upgradeForce>` | boolean | helm.upgrade.force | false | Force resource updates through a replacement strategy.
 `<upgradeAtomic>` | boolean | helm.upgrade.atomic | false | Set this to `true` to rollback changes made in case of failed upgrade.
-`<upgradeTimeout>` | boolean | helm.upgrade.imeout | false | Time in seconds to wait for any individual Kubernetes operation during upgrade process. The default is 300 seconds (from helm) if `upgradeTimeout` is set to `true`.
+`<upgradeTimeout>` | boolean | helm.upgrade.timeout | false | Time in seconds to wait for any individual Kubernetes operation during upgrade process. The default is 300 seconds (from helm) if `upgradeTimeout` is set to `true`.
 `<upgradeDryRun>` | boolean | helm.upgrade.dryRun | false | Run upgrade goal only in dry run mode
 `<uninstallWait>` | boolean | helm.uninstall.wait | false | If set, will wait until all the resources are deleted before returning. It will wait for as long as `uninstallTimeout`.
 `<uninstallTimeout>` | boolean | helm.uninstall.timeout | false | Time to wait for any individual Kubernetes operation (like Jobs for hooks) (default 5m0s).
@@ -330,7 +333,7 @@ Parameter | Type | User Property | Required | Description
 `<insecure>` | boolean | helm.push.insecure | false | Skip tls certificate checks for the chart upload. Also known as `helm push --insecure-skip-tls-verify`
 `<fallbackBinaryDownload>` | boolean | helm.fallbackBinaryDownload | false | Controls whether a download should occur when local helm binary is not found. This property has no effect unless `<useLocalHelmBinary>` is set to `true`.
 `<overwriteLocalDependencies>` | boolean | helm.overwriteLocalDependencies | false | Controls whether a local path chart should be used for a chart dependency. When set to `true`, chart dependencies on a local path chart will be overwritten with the respective properties set by `overwriteDependencyVersion` and `overwriteDependencyRepository`. This is helpful for deploying charts with intra repository dependencies, while still being able to use local path dependencies for development builds. Example usage: for development use `mvn clean install` and for deployment use `mvn clean deploy -Dhelm.overwriteLocalDependencies=true`
-`<overwriteDependencyVersion>` | string | helm.overwriteDependencyVersion | false |  Value used to overwrite a local path chart's version within a chart's dependencies. The property `overwriteLocalDependencies` must be set to `true` for this to apply.
+`<overwriteDependencyVersion>` | string | helm.overwriteDependencyVersion | false | Value used to overwrite a local path chart's version within a chart's dependencies. The property `overwriteLocalDependencies` must be set to `true` for this to apply.
 `<overwriteDependencyRepository>` | string | helm.overwriteDependencyRepository | false | Value used to overwrite a local path chart's repository within a chart's dependencies. The property `overwriteLocalDependencies` must be set to `true` for this to apply.
 
 ## Packaging with the Helm Lifecycle

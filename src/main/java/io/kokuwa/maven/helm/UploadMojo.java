@@ -85,7 +85,7 @@ public class UploadMojo extends AbstractHelmMojo {
 	 * @since 6.11.2
 	 */
 	@Parameter(property = "helm.upload.verification", defaultValue = "false")
-	private boolean verification;
+	private boolean uploadVerification;
 
 	/**
 	 * Set timeout period to try verifying charts are accessible in repository.
@@ -93,7 +93,7 @@ public class UploadMojo extends AbstractHelmMojo {
 	 * @since 6.11.2
 	 */
 	@Parameter(property = "helm.upload.timeout", defaultValue = "30")
-	private Integer timeout;
+	private Integer uploadVerificationTimeout;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -103,7 +103,7 @@ public class UploadMojo extends AbstractHelmMojo {
 			return;
 		}
 
-		if (timeout != null && timeout <= 0) {
+		if (uploadVerificationTimeout != null && uploadVerificationTimeout <= 0) {
 			throw new IllegalArgumentException("Timeout must be a positive value.");
 		}
 
@@ -117,7 +117,7 @@ public class UploadMojo extends AbstractHelmMojo {
 			}
 		}
 
-		if (verification) {
+		if (uploadVerification) {
 			for (Path chartDirectory : getChartDirectories()) {
 				Path chartPath = chartDirectory.resolve("Chart.yaml");
 				getLog().info("Verifying upload of " + chartPath);
@@ -204,34 +204,33 @@ public class UploadMojo extends AbstractHelmMojo {
 	}
 
 	private boolean verifyUpload(Path chartPath) throws MojoExecutionException {
-		ObjectMapper MAPPER = new YAMLMapper()
+		ObjectMapper mapper = new YAMLMapper()
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		String chartName;
-		String chartVersion;
 		try {
-			chartName = MAPPER.readValue(chartPath.toFile(), HelmChart.class).getName();
-			chartVersion = MAPPER.readValue(chartPath.toFile(), HelmChart.class).getVersion();
+			chartName = mapper.readValue(chartPath.toFile(), HelmChart.class).getName();
 		} catch (IOException e) {
 			throw new MojoExecutionException("Unable to read chart from " + chartPath, e);
 		}
 
-		long startTime = System.currentTimeMillis();
-		long timeoutMillis = timeout * 1000;
+		long startTimeMillis = System.currentTimeMillis();
+		long timeoutMillis = uploadVerificationTimeout * 1000;
+		long cutoffMillis = startTimeMillis + timeoutMillis;
 		boolean verificationSuccess = false;
 
-		while (System.currentTimeMillis() - startTime < timeoutMillis && !verificationSuccess) {
+		while (System.currentTimeMillis() < cutoffMillis && !verificationSuccess) {
 			try {
 				helm()
 					.arguments("show", "chart", chartName,
-						"--version", chartVersion, "--repo", getHelmUploadUrl())
+						"--version", getChartVersion(), "--repo", getHelmUploadUrl())
 					.execute("show chart failed");
 				verificationSuccess = true;
 			} catch (Exception e) {
 				getLog().info("Upload verification failed, retrying...");
 				try {
-					Thread.sleep(10000);
+					Thread.sleep(1000);
 				} catch (InterruptedException ie) {
-					throw new MojoExecutionException("Upload verification timed out", ie);
+					throw new MojoExecutionException("Upload verification interrupted", ie);
 				}
 			}
 		}
