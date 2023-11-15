@@ -20,6 +20,11 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.StringUtils;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+
+import io.kokuwa.maven.helm.pojo.HelmChart;
 import io.kokuwa.maven.helm.pojo.HelmRepository;
 import io.kokuwa.maven.helm.pojo.RepoType;
 import lombok.Setter;
@@ -74,12 +79,32 @@ public class UploadMojo extends AbstractHelmMojo {
 	@Parameter(property = "helm.upload.insecure", defaultValue = "false")
 	private boolean insecure;
 
+	/**
+	 * Verify charts are accessible in repository.
+	 *
+	 * @since 6.11.2
+	 */
+	@Parameter(property = "helm.upload.verification", defaultValue = "false")
+	private boolean uploadVerification;
+
+	/**
+	 * Set timeout period to try verifying charts are accessible in repository.
+	 *
+	 * @since 6.11.2
+	 */
+	@Parameter(property = "helm.upload.timeout", defaultValue = "30")
+	private Integer uploadVerificationTimeout;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
 		if (skip || skipUpload) {
 			getLog().info("Skip upload");
 			return;
+		}
+
+		if (uploadVerificationTimeout != null && uploadVerificationTimeout <= 0) {
+			throw new IllegalArgumentException("Timeout must be a positive value.");
 		}
 
 		getLog().info("Uploading to " + getHelmUploadUrl() + "\n");
@@ -89,6 +114,17 @@ public class UploadMojo extends AbstractHelmMojo {
 				uploadSingle(chart);
 			} catch (IOException e) {
 				throw new MojoExecutionException("Upload failed.", e);
+			}
+		}
+
+		if (uploadVerification) {
+			for (Path chartDirectory : getChartDirectories()) {
+				Path chartPath = chartDirectory.resolve("Chart.yaml");
+				getLog().info("Verifying upload of " + chartPath);
+				if (!verifyUpload(chartPath)) {
+					getLog().info("Upload verification timed out.");
+					throw new MojoExecutionException("Chart verification failed");
+				}
 			}
 		}
 	}
@@ -165,6 +201,40 @@ public class UploadMojo extends AbstractHelmMojo {
 			getLog().info(message);
 		}
 		connection.disconnect();
+	}
+
+	private boolean verifyUpload(Path chartPath) throws MojoExecutionException {
+		ObjectMapper mapper = new YAMLMapper()
+				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		String chartName;
+		try {
+			chartName = mapper.readValue(chartPath.toFile(), HelmChart.class).getName();
+		} catch (IOException e) {
+			throw new MojoExecutionException("Unable to read chart from " + chartPath, e);
+		}
+
+		long startTimeMillis = System.currentTimeMillis();
+		long timeoutMillis = uploadVerificationTimeout * 1000;
+		long cutoffMillis = startTimeMillis + timeoutMillis;
+		boolean verificationSuccess = false;
+
+		while (System.currentTimeMillis() < cutoffMillis && !verificationSuccess) {
+			try {
+				helm()
+					.arguments("show", "chart", chartName,
+						"--version", getChartVersion(), "--repo", getHelmUploadUrl())
+					.execute("show chart failed");
+				verificationSuccess = true;
+			} catch (Exception e) {
+				getLog().info("Upload verification failed, retrying...");
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ie) {
+					throw new MojoExecutionException("Upload verification interrupted", ie);
+				}
+			}
+		}
+		return verificationSuccess;
 	}
 
 	private HttpURLConnection getConnectionForUploadToChartMuseum() throws IOException, MojoExecutionException {
