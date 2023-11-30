@@ -38,9 +38,8 @@ public class HelmMojoTest extends AbstractMojoTest {
 		void fixed(LintMojo mojo) {
 			mojo.setUseLocalHelmBinary(true);
 			mojo.setAutoDetectLocalHelmBinary(false);
-			mojo.setHelmExecutableDirectory(MojoExtension.determineHelmExecutableDirectory());
-			Path expected = Paths.get(MojoExtension.determineHelmExecutableDirectory().toString())
-					.resolve(HELM).toAbsolutePath();
+			mojo.setHelmExecutableDirectory(MojoExtension.determineHelmExecutableDirectory().toFile());
+			Path expected = MojoExtension.determineHelmExecutableDirectory().resolve(HELM);
 			Path actual = assertDoesNotThrow(() -> mojo.getHelmExecutablePath());
 			assertEquals(expected, actual);
 		}

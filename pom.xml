@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>helm-maven-plugin</artifactId>
-	<version>6.12.1-SNAPSHOT</version>
+	<version>6.13.0-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>Helm Maven Plugin</name>
@@ -88,7 +88,7 @@
 		<!-- we have flaky tests with caching of Authenticator.setDefault() -->
 		<surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
 
-		<invoker.debug>true</invoker.debug>
+		<invoker.debug>false</invoker.debug>
 		<invoker.parallelThreads>0.5C</invoker.parallelThreads>
 		<invoker.settingsFile>${project.basedir}/src/it/settings.xml</invoker.settingsFile>
 

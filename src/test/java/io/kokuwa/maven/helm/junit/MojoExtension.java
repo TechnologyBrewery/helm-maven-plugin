@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -114,7 +116,7 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 			// preconfigure
 
 			mojo.setChartDirectory(new File("src/test/resources/simple")); // set some sane defaults for tests
-			mojo.setHelmExecutableDirectory(determineHelmExecutableDirectory());
+			mojo.setHelmExecutableDirectory(determineHelmExecutableDirectory().toFile()); // avoid download helm
 			mojo.setHelmVersion("3.12.0"); // avoid github api
 
 			return mojo;
@@ -125,13 +127,10 @@ public class MojoExtension implements ParameterResolver, BeforeAllCallback {
 
 	/**
 	 * Determines which helm executable to use based on the machine's architecture.
+	 *
 	 * @return location of appropriate helm executable
 	 */
-	public static File determineHelmExecutableDirectory() {
-		if (System.getProperty("os.arch").equals("aarch64")) {
-			return new File("src/it/helm-executables/aarch64-helm/");
-		} else {
-			return new File("src/it/helm-executables/x86_64-helm/");
-		}
+	public static Path determineHelmExecutableDirectory() {
+		return Paths.get("src/bin/" + System.getProperty("os.arch")).toAbsolutePath();
 	}
 }

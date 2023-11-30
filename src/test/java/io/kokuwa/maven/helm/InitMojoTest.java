@@ -104,7 +104,7 @@ public class InitMojoTest extends AbstractMojoTest {
 		mojo.setUseLocalHelmBinary(true);
 		mojo.setFallbackBinaryDownload(false);
 		mojo.setHelmVersion(null);
-		mojo.setHelmExecutableDirectory(MojoExtension.determineHelmExecutableDirectory());
+		mojo.setHelmExecutableDirectory(MojoExtension.determineHelmExecutableDirectory().toFile());
 		assertHelm(mojo, "version", "repo add stable " + InitMojo.STABLE_HELM_REPO);
 	}
 
