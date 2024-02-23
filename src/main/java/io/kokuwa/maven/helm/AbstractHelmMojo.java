@@ -98,7 +98,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 * @since 1.0
 	 */
 	@Parameter(property = "helm.outputDirectory", defaultValue = "${project.build.directory}/helm/repo")
-	private File outputDirectory;
+	protected File outputDirectory;
 
 	/**
 	 * List of chart directories to exclude.
@@ -113,7 +113,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 *
 	 * @since 1.0
 	 */
-	@Parameter(property = "helm.chartDirectory", required = true)
+	@Parameter(property = "helm.chartDirectory", defaultValue = "${project.basedir}")
 	private File chartDirectory;
 
 	/**
@@ -130,7 +130,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 * @since 1.10
 	 */
 	@Parameter
-	private HelmRepository uploadRepoStable;
+	protected HelmRepository uploadRepoStable;
 
 	/**
 	 * Upload repository for snapshot charts (determined by version postfix 'SNAPSHOT').
@@ -138,7 +138,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 * @since 1.10
 	 */
 	@Parameter
-	private HelmRepository uploadRepoSnapshot;
+	protected HelmRepository uploadRepoSnapshot;
 
 	/**
 	 * Version of helm to download.
@@ -352,7 +352,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 				.flag("repository-config", repositoryConfig);
 	}
 
-	List<Path> getChartDirectories() throws MojoExecutionException {
+	protected List<Path> getChartDirectories() throws MojoExecutionException {
 
 		List<String> exclusions = new ArrayList<>();
 		if (excludes != null) {
