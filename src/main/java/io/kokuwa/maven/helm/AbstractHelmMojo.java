@@ -310,7 +310,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 				.orElseThrow(() -> new MojoExecutionException("Helm executable not found."));
 	}
 
-	HelmExecutable helm() throws MojoExecutionException {
+	protected HelmExecutable helm() throws MojoExecutionException {
 		HelmExecutable helm = new HelmExecutable(getLog(), getHelmExecutablePath());
 		if (k8sCluster != null) {
 			boolean logDeprecated = false;
