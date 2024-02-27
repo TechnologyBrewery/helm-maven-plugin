@@ -1,5 +1,8 @@
 package io.kokuwa.maven.helm;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -81,6 +84,13 @@ public class PackageMojo extends AbstractHelmMojo {
 	@Parameter(property = "helm.chartVersion.timestampFormat", defaultValue = "yyyyMMddHHmmss")
 	private String timestampFormat;
 
+	/**
+	 * Location of the artifact that will be published for this module.
+	 */
+	@Parameter(property = "helm.mavenArtifactFile", required = true, defaultValue =
+			"${project.basedir}/target/helm.placeholder.txt")
+	protected File mavenArtifactFile;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
@@ -116,7 +126,30 @@ public class PackageMojo extends AbstractHelmMojo {
 			}
 
 			helm.execute("Unable to package chart at " + chartDirectory);
+			setUpPlaceholderFileAsMavenArtifact();
 		}
+	}
+
+	/**
+	 * Writes a dummy file to the maven repository for this artifact, so that it can be managed
+	 * as a maven dependency, even though the helm chart is not written to maven's repository
+	 */
+	protected void setUpPlaceholderFileAsMavenArtifact() {
+		mavenArtifactFile.getParentFile().mkdirs();
+		try (PrintWriter writer = new PrintWriter(mavenArtifactFile)) {
+			writer.println("This is NOT the file you are looking for!");
+			writer.println();
+			writer.println("To take advantage of the Maven Reactor, we want to publish pom files for this artifact.");
+			writer.println("But Maven isn't the right solution for managing Helm dependencies.");
+			writer.println();
+			writer.println(String.format("Please check your appropriate Helm repository for the %s chart instead!",
+					mavenProject.getArtifactId()));
+
+		} catch (FileNotFoundException e) {
+			getLog().error("Could not create placeholder artifact file!", e);
+		}
+
+		mavenProject.getArtifact().setFile(mavenArtifactFile);
 	}
 
 	LocalDateTime getTimestamp() {
