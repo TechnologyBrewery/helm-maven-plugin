@@ -104,6 +104,8 @@
 		<version.com.github.tomakehurst.wiremock>2.35.2</version.com.github.tomakehurst.wiremock>
 		<version.com.puppycrawl.tools.checkstyle>9.3</version.com.puppycrawl.tools.checkstyle>
 
+		<maven.compiler.failOnWarning>false</maven.compiler.failOnWarning>
+
 	</properties>
 
 	<dependencies>

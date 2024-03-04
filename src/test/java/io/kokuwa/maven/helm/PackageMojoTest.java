@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.time.LocalDateTime;
 
+import org.apache.maven.artifact.DefaultArtifact;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	@DisplayName("default values")
 	@Test
 	void packageExecute(PackageMojo mojo) {
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo, "package src/test/resources/simple --destination target/helm/repo");
 	}
 
@@ -29,6 +32,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	@Test
 	void dependencies(PackageMojo mojo) {
 		mojo.setChartDirectory(new File("src/test/resources/dependencies"));
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo,
 				"package src/test/resources/dependencies/b --destination target/helm/repo",
 				"package src/test/resources/dependencies/a2 --destination target/helm/repo",
@@ -40,6 +45,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	@Test
 	void appVersion(PackageMojo mojo) {
 		mojo.setAppVersion("0815");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo, "package src/test/resources/simple --destination target/helm/repo --app-version 0815");
 	}
 
@@ -47,6 +54,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	@Test
 	void chartVersionStable(PackageMojo mojo) {
 		mojo.setChartVersion("0.0.1");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo, "package src/test/resources/simple --destination target/helm/repo --version 0.0.1");
 	}
 
@@ -54,6 +63,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	@Test
 	void chartVersionSnapshot(PackageMojo mojo) {
 		mojo.setChartVersion("0.0.1-SNAPSHOT");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo, "package src/test/resources/simple --destination target/helm/repo --version 0.0.1-SNAPSHOT");
 	}
 
@@ -63,6 +74,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 		when(mojo.getTimestamp()).thenReturn(LocalDateTime.of(1996, 10, 15, 23, 56, 12));
 		mojo.setChartVersion("0.0.1-SNAPSHOT");
 		mojo.setTimestampOnSnapshot(true);
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo,
 				"package src/test/resources/simple --destination target/helm/repo --version 0.0.1-19961015235612");
 	}
@@ -74,6 +87,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 		mojo.setChartVersion("0.0.1-SNAPSHOT");
 		mojo.setTimestampOnSnapshot(true);
 		mojo.setTimestampFormat("yyyyMMdd-HHmmss");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo,
 				"package src/test/resources/simple --destination target/helm/repo --version 0.0.1-19961015-235612");
 	}
@@ -83,6 +98,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 	void keyringWithoutPassword(PackageMojo mojo) {
 		mojo.setKeyring("foo");
 		mojo.setKey("bar");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo,
 				"package src/test/resources/simple --destination target/helm/repo --sign --keyring foo --key bar");
 	}
@@ -93,6 +110,8 @@ public class PackageMojoTest extends AbstractMojoTest {
 		mojo.setKeyring("foo");
 		mojo.setKey("bar");
 		mojo.setPassphrase("secret");
+		mojo.mavenProject.setArtifact(new DefaultArtifact("io.kokuwa.maven", "helm-maven-plugin",
+				"1.0.0", "", "", "", null));
 		assertHelm(mojo, "package src/test/resources/simple --destination target/helm/repo"
 				+ " --sign --keyring foo --key bar --passphrase-file -");
 	}
