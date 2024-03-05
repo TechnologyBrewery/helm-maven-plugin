@@ -78,23 +78,28 @@ public class HelmExecutable {
 		return this;
 	}
 
+	public String execute(String errorMessage) throws MojoExecutionException {
+		return execute(errorMessage, true);
+	}
+
 	/**
 	 * Execute helm command.
 	 *
 	 * @param errorMessage Error message if exit code is not zero.
+	 * @param output If true, logs the output to the console
+	 * @return output from helm command
 	 * @throws MojoExecutionException Failed to execute helm command.
 	 */
-	public void execute(String errorMessage) throws MojoExecutionException {
+	public String execute(String errorMessage, boolean debug) throws MojoExecutionException {
 
 		String command = Stream.of(toCommand(true)).collect(Collectors.joining(" "));
 		log.debug("Execute: " + command);
-
+		StringBuilder outputBuilder = new StringBuilder();
 		try {
 
 			Process process = Runtime.getRuntime().exec(toCommand(false));
 
 			// write to stdin
-
 			if (StringUtils.isNotEmpty(stdin)) {
 				try (OutputStream output = process.getOutputStream()) {
 					output.write(stdin.getBytes(StandardCharsets.UTF_8));
@@ -110,7 +115,10 @@ public class HelmExecutable {
 					BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 					String line;
 					while ((line = reader.readLine()) != null) {
-						log.info(line);
+						outputBuilder.append(line).append("\n");
+					}
+					if (debug) {
+						log.info(outputBuilder.toString());
 					}
 				} catch (IOException e) {
 					log.error("Failed to redirect input", e);
@@ -137,6 +145,7 @@ public class HelmExecutable {
 		} catch (IOException | InterruptedException e) {
 			throw new MojoExecutionException("Error processing command: " + command, e);
 		}
+		return outputBuilder.toString();
 	}
 
 	/**
