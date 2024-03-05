@@ -72,7 +72,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 * @since 4.0
 	 */
 	@Parameter(property = "helm.useLocalHelmBinary", defaultValue = "false")
-	private boolean useLocalHelmBinary;
+	protected boolean useLocalHelmBinary;
 
 	/**
 	 * Controls whether the local binary should be auto-detected from PATH environment variable. If set to
@@ -82,7 +82,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 	 * @since 4.1
 	 */
 	@Parameter(property = "helm.autoDetectLocalHelmBinary", defaultValue = "true")
-	private boolean autoDetectLocalHelmBinary;
+	protected boolean autoDetectLocalHelmBinary;
 
 	/**
 	 * Directory of your helm installation.
@@ -310,7 +310,7 @@ public abstract class AbstractHelmMojo extends AbstractMojo {
 				.orElseThrow(() -> new MojoExecutionException("Helm executable not found."));
 	}
 
-	HelmExecutable helm() throws MojoExecutionException {
+	protected HelmExecutable helm() throws MojoExecutionException {
 		HelmExecutable helm = new HelmExecutable(getLog(), getHelmExecutablePath());
 		if (k8sCluster != null) {
 			boolean logDeprecated = false;

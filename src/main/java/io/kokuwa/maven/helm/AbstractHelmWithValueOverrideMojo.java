@@ -22,7 +22,7 @@ public abstract class AbstractHelmWithValueOverrideMojo extends AbstractHelmMojo
 	private ValueOverride values;
 
 	@Override
-	HelmExecutable helm() throws MojoExecutionException {
+	protected HelmExecutable helm() throws MojoExecutionException {
 		HelmExecutable command = super.helm();
 		if (values != null) {
 			if (isNotEmpty(values.getOverrides())) {
