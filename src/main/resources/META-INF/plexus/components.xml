@@ -13,7 +13,10 @@
 							<process-resources>org.technologybrewery:helm-maven-plugin:dependency-build</process-resources>
 							<test>org.technologybrewery:helm-maven-plugin:lint</test>
 							<package>org.technologybrewery:helm-maven-plugin:package</package>
-							<deploy>org.technologybrewery:helm-maven-plugin:upload</deploy>
+							<deploy>
+								org.apache.maven.plugins:maven-deploy-plugin:deploy,
+								org.technologybrewery:helm-maven-plugin:upload
+							</deploy>
 							<install>org.apache.maven.plugins:maven-install-plugin:install</install>
 						</phases>
 					</lifecycle>
